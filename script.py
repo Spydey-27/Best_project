@@ -9,11 +9,11 @@
 #     print("connection reussie")
     
     
-# from pymongo.mongo_client import MongoClient
-# from pymongo.server_api import ServerApi
-# uri = "mongodb+srv://vasseur:aled@cluster0.bgn7j.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-# # Create a new client and connect to the server
-# client = MongoClient(uri, server_api=ServerApi('1'))
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+uri = "mongodb+srv://vasseur:aled@cluster0.bgn7j.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+# Create a new client and connect to the server
+client = MongoClient(uri, server_api=ServerApi('1'))
 # # Send a ping to confirm a successful connection
 # try:
 #     client.admin.command('ping')
@@ -22,21 +22,15 @@
 #     print(e)
 
 
-import streamlit as st
+db = client["entertainement"]
+films_collection = db["films"]
 
-st.title("Notre magnifique projet NOSQL")
+pipeline = [
+    {"$group": {"_id": "$year", "nombre_films": {"$sum": 1}}},
+    {"$sort": {"nombre_films": -1}},
+    {"$limit": 1}
+]
 
-# Créer les onglets
-titres_onglets = ['MongoDB', 'Neo4j']
-onglets = st.tabs(titres_onglets)
-
-
-with onglets[0]:
-    st.header('Réponse aux questions de la partie MongDB')
-    st.write("C'est ici que vous pouvez prétraiter vos données.")
-
-# Ajouter du contenu à l'onglet Formation des modèles
-with onglets[1]:
-    st.header('Réponse aux questions de la partie Neo4J')
-    st.write("C'est ici que vous pouvez former votre modèle.")
+# Exécuter l'agrégation
+resultat = list(films_collection.aggregate(pipeline))
 

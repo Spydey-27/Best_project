@@ -1,0 +1,46 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - streamlit_network
+
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j
+    restart: always # Redémarrage automatique quand le service s'arrête
+    ports:
+      - "7474:7474"   # Interface Web Neo4j
+      - "7687:7687"   # Bolt pour les connexions
+    environment:
+      - NEO4J_AUTH=neo4j/Ceciestuntest
+    volumes:
+      - neo4j_data:/data
+    networks:
+      - streamlit_network
+
+  streamlit:
+    build: streamlit
+    container_name: streamlit_app
+    restart: always
+    ports:
+      - "8501:8501"
+    depends_on:
+      - mongodb
+      - neo4j
+    networks:
+      - streamlit_network
+    volumes:
+      - ./streamlit:/app 
+
+volumes:
+  mongodb_data:
+  neo4j_data:
+
+networks:
+  streamlit_network:

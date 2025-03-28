@@ -1,0 +1,28 @@
+# Ignorer les fichiers de configuration spécifiques à l'environnement
+
+
+# Ignorer les fichiers de base de données temporaires ou de test
+*.sqlite
+*.sqlite3
+*.db
+*.log
+
+# Ignorer les dossiers de dépendances
+node_modules/
+vendor/
+
+# Ignorer les fichiers générés par l'IDE
+.idea/
+.vscode/
+*.iml
+
+# Ignorer les fichiers système
+.DS_Store
+Thumbs.db
+
+# Ignorer les fichiers de sauvegarde
+*.bak
+*.tmp
+*.swp
+
+streamlit/__pycache__/

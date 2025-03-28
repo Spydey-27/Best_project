@@ -18,7 +18,7 @@ services:
       - "7474:7474"   # Interface Web Neo4j
       - "7687:7687"   # Bolt pour les connexions
     environment:
-      - NEO4J_AUTH=neo4j/Ceciestuntest
+      - NEO4J_AUTH=neo4j/${NEO4J}
     volumes:
       - neo4j_data:/data
     networks:
@@ -37,6 +37,8 @@ services:
       - streamlit_network
     volumes:
       - ./streamlit:/app 
+    environment:
+      - NEO4J_AUTH=${NEO4J}
 
 volumes:
   mongodb_data:

@@ -1,21 +1,11 @@
 import streamlit as st
-from pymongo import MongoClient
-from neo4j import GraphDatabase
 import json
-
 from requetes import *
+
+from globals import collection, neo4j_driver, createdb
 
 ############## Connexion Mongo DB + Neo4J #####################
 
-# Connexion MongoDB 
-client = MongoClient("mongodb://mongodb:27017/")
-db = client["movies"]
-collection = db["films"]
-
-# Connexion Neo4j
-uri = "bolt://neo4j:7687"
-auth = ("neo4j", "Ceciestuntest")
-neo4j_driver = GraphDatabase.driver(uri, auth=auth)
 
 ######################## Config Streamlit #########################
 st.set_page_config(
@@ -47,7 +37,7 @@ def load_data():
     file.close()
 
 
-
+import os
 def home():
     """
     Permet de charger la page d'accueil
@@ -55,39 +45,50 @@ def home():
     st.title("Bienvenue sur notre projet NoSQL aka le 🌟 Best project 🌟")
     st.write("Ce projet a été réalisé par Julien Oliveira et Ambre Vasseur.")
     
-    col1, col2 = st.columns(2)
-   
-    st.header('Réponse aux questions de la partie MongDB')
-    st.write("C'est ici que vous pouvez prétraiter vos données.")
+    onglet1, onglet2 = st.tabs(["MongoDB", "Neo4j"]) 
+    
 
-    with col1:
-        if st.button("Charger les données"):
-            load_data()
-            st.success("Données chargées !")
+    with onglet1:
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Charger les données"):
+                            load_data()
+                            st.success("Données chargées !")
+            if st.button("Ajouter un document à MongoDB"):
+                collection.insert_one({"message": "Hello from MongoDB!"})
+                st.success("Document ajouté !")
+        with col2:
+            if st.button("Supprimer les données"):
+                collection.drop()
+                st.success("Données supprimées !")
 
-    with col2:
-        if st.button("supprimer les données"):
-            collection.drop()
-            st.success("Données supprimées !")
+            if st.button("Afficher les documents MongoDB"):
+                documents = list(collection.find({}, {"_id": 0}))
+                st.json(documents)
 
-    if st.button("Ajouter un document à MongoDB"):
-        collection.insert_one({"message": "Hello from MongoDB!"})
-        st.success("Document ajouté !")
+    with onglet2:
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Créer la base de données"):
+                createdb()
+                st.success("Base de données créée !")
+            
+            if st.button("Ajouter un nœud Neo4j"):
+                st.success("Nœud ajouté !")
+        with col2:
+            if st.button("Supprimer la base de données"):
+                with neo4j_driver.session(database="neo4j") as session:
+                    session.run("MATCH (n) DETACH DELETE n")
 
-    if st.button("Afficher les documents MongoDB"):
-        documents = list(collection.find({}, {"_id": 0}))
-        st.json(documents)
+                session.close()
+                st.success("Base de données supprimée !")
 
-    if st.button("Ajouter un nœud Neo4j"):
-        with neo4j_driver.session() as session:
-            session.run("CREATE (n:Test {message: 'Hello from Neo4j'})")
-        st.success("Nœud ajouté !")
-
-    if st.button("Afficher les nœuds Neo4j"):
-        with neo4j_driver.session() as session:
-            result = session.run("MATCH (n:Test) RETURN n.message AS message")
-            messages = [record["message"] for record in result]
-        st.json(messages)
+            if st.button("Afficher les nœuds Neo4j"):
+                with neo4j_driver.session(database="neo4j") as session:
+                    result = session.run("MATCH (n) RETURN n")
+                    messages = [record["n"] for record in result]
+                session.close()
+                st.json(messages)
 
 def sources():
     """ Charge la page qui permet de montrer nos sources
@@ -109,42 +110,64 @@ def Questions():
     """ Page la plus importante du projet ! 
     Elle permet d'accéder à toutes les questions
     """
-    submenu = st.sidebar.selectbox("Questions", [f"Question {i}" for i in range(1,31)])
+    questions = [f"Question {i}" for i in range(1, 31)]
+    if "question_index" not in st.session_state:
+        st.session_state.question_index = 0
+    submenu = st.sidebar.selectbox("Questions", [f"Question {i}" for i in range(1,31)],index=st.session_state.question_index)
+
+   
+
+    titres_onglets = ['Réponse', 'Requête', 'Visualisation']
+
+    st.title(f"Question {submenu.split()[-1]}")
+    onglet1, onglet2, onglet3 = st.tabs(titres_onglets)
 
     switch = {
-        "Question 1": question1,
-        "Question 2": question2,
-        "Question 3": question3,
-        "Question 4": question4,
-        "Question 5": question5,
-        "Question 6": question6,
-        "Question 7": question7,
-        "Question 8": question8,
-        "Question 9": question9,
-        "Question 10": question10,
-        "Question 11": question11,
-        "Question 12": question12,
-        "Question 13": question13,
-        "Question 14": question14,
-        "Question 15": question15,
-        "Question 16": question16,
-        "Question 17": question17,
-        "Question 18": question18,
-        "Question 19": question19,
-        "Question 20": question20,
-        "Question 21": question21,
-        "Question 22": question22,
-        "Question 23": question23,
-        "Question 24": question24,
-        "Question 25": question25,
-        "Question 26": question26,
-        "Question 27": question27,
-        "Question 28": question28,
-        "Question 29": question29,
-        "Question 30": question30
-    }
+        "Question 1": lambda : question1(onglet1,onglet2,onglet3),
+        "Question 2":  lambda : question2(onglet1,onglet2,onglet3),
+        "Question 3":  lambda : question3(onglet1,onglet2,onglet3),
+        "Question 4":  lambda : question4(onglet1,onglet2,onglet3),
+        "Question 5":  lambda : question5(onglet1,onglet2,onglet3),
+        "Question 6":  lambda : question6(onglet1,onglet2,onglet3),
+        "Question 7":  lambda : question7(onglet1,onglet2,onglet3),
+        "Question 8":  lambda : question8(onglet1,onglet2,onglet3),
+        "Question 9":  lambda : question9(onglet1,onglet2,onglet3),
+        "Question 10":  lambda : question10(onglet1,onglet2,onglet3),
+        "Question 11":  lambda : question11(onglet1,onglet2,onglet3),
+        "Question 12":  lambda : question12(onglet1,onglet2,onglet3),
+        "Question 13":  lambda : question13(onglet1,onglet2,onglet3),
+        "Question 14":  lambda : question14(onglet1,onglet2,onglet3),
+        "Question 15":  lambda : question15(onglet1,onglet2,onglet3),
+        "Question 16":  lambda : question16(onglet1,onglet2,onglet3),
+        "Question 17":  lambda : question17(onglet1,onglet2,onglet3),
+        "Question 18":  lambda : question18(onglet1,onglet2,onglet3),
+        "Question 19":  lambda : question19(onglet1,onglet2,onglet3),
+        "Question 20":  lambda : question20(onglet1,onglet2,onglet3),
+        "Question 21":  lambda : question21(onglet1,onglet2,onglet3),
+        "Question 22":  lambda : question22(onglet1,onglet2,onglet3),
+        "Question 23":  lambda : question23(onglet1,onglet2,onglet3),
+        "Question 24":  lambda : question24(onglet1,onglet2,onglet3),
+        "Question 25":  lambda : question25(onglet1,onglet2,onglet3),
+        "Question 26":  lambda : question26(onglet1,onglet2,onglet3),
+        "Question 27":  lambda : question27(onglet1,onglet2,onglet3),
+        "Question 28":  lambda : question28(onglet1,onglet2,onglet3),
+        "Question 29":  lambda : question29(onglet1,onglet2,onglet3),
+        "Question 30":  lambda : question3(onglet1,onglet2,onglet3)
+    } 
 
     switch.get(submenu, lambda: st.write("Question non définie"))()
+
+    col1, col2 = st.sidebar.columns([1, 1])
+
+    with col1:
+        if st.button("⬅️ Précédent"):
+            st.session_state.question_index = (st.session_state.question_index - 1) % len(questions)
+            st.rerun()
+
+    with col2:
+        if st.button("➡️ Suivant"):
+            st.session_state.question_index = (st.session_state.question_index + 1) % len(questions)
+            st.rerun()
 
 ################### Streamlit Navigation Bar ################################""
 

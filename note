@@ -1,0 +1,5 @@
+id, title, year, Votes
+, Revenue, rating et director.
+
+Faire une requête mongoDB pour récupérer tous les films avec :
+_id = 1, title=1, year=1, Director =1,rating =1, Votes=1, Revenue=1

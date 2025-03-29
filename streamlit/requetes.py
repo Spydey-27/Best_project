@@ -322,11 +322,37 @@ def question22(onglet1,onglet2,onglet3):
         st.code('records, summary, keys = neo4j_driver.execute_query("MATCH (n:Realisateur)-[:A_Realise]->(m:films)<-[:A_jouer]-(a:Actors) RETURN a.actor, COUNT(DISTINCT n.realisateur) AS different_realisator ORDER BY different_realisator DESC LIMIT 5" , database_="neo4j")')
 
 def question23(onglet1,onglet2,onglet3):
-    title = st.selectbox(
-        "Sélectionnez un film",
-        ["Passengers", "The Dark Knight", "Inception", "The Avengers", "Avatar"]
-    ) 
-    st.write(title)
+    records, summary, keys = neo4j_driver.execute_query(
+        """
+        MATCH (n:Actors)-[:A_jouer]->(f:films)
+        RETURN n.actor
+        """
+        , database_="neo4j",
+    )
+    actor = st.selectbox(
+            "Sélectionnez un acteur",
+            [record[0] for record in records]
+        )
+    records2, summary2, keys2 = neo4j_driver.execute_query(
+        f"""
+        MATCH (a:Actors)-[:A_jouer]->(m:films)-[:A_pour_genre]->(g:Genre)
+        WHERE a.actor = "{actor}"
+        MATCH (m2:films)-[:A_pour_genre]->(g)
+        WHERE NOT (a)-[:A_jouer]->(m2)
+        RETURN m2.title AS Recommandation, COUNT(DISTINCT g) AS Score
+        ORDER BY Score DESC, rand()
+        LIMIT 5;
+        """
+        , database_="neo4j",
+    )
+
+    with onglet1:
+        st.header(f"Quels sont les films recommandés pour {actor} ?")
+        for record in records2:
+            st.write(f"- {record[0]}")
+    with onglet2:
+        st.header("Voici notre requête")
+        st.code(f'records2, summary2, keys2 = neo4j_driver.execute_query("MATCH (a:Actors)-[:A_jouer]->(m:films)-[:A_pour_genre]->(g:Genre) WHERE a = "{actor}" MATCH (m2:films)-[:A_pour_genre]->(g) WHERE NOT (a)-[:A_jouer]->(m2) RETURN m2.title AS Recommandation, COUNT(DISTINCT g) AS Score ORDER BY Score DESC, rand() LIMIT 5;" , database_="neo4j")')
 
 def question24(onglet1,onglet2,onglet3):
     pass

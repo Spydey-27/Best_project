@@ -113,9 +113,9 @@ def Questions():
     questions = [f"Question {i}" for i in range(1, 31)]
     if "question_index" not in st.session_state:
         st.session_state.question_index = 0
-    submenu = st.sidebar.selectbox("Questions", [f"Question {i}" for i in range(1,31)],index=st.session_state.question_index)
+    submenu = st.sidebar.selectbox("Questions", [f"Question {i}" for i in range(1,31)], index=st.session_state.question_index)
 
-   
+    st.session_state.question_index = questions.index(submenu)
 
     titres_onglets = ['Réponse', 'Requête', 'Visualisation']
 
@@ -152,7 +152,7 @@ def Questions():
         "Question 27":  lambda : question27(onglet1,onglet2,onglet3),
         "Question 28":  lambda : question28(onglet1,onglet2,onglet3),
         "Question 29":  lambda : question29(onglet1,onglet2,onglet3),
-        "Question 30":  lambda : question3(onglet1,onglet2,onglet3)
+        "Question 30":  lambda : question30(onglet1,onglet2,onglet3)
     } 
 
     switch.get(submenu, lambda: st.write("Question non définie"))()

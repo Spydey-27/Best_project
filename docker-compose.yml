@@ -19,6 +19,7 @@ services:
       - "7687:7687"   # Bolt pour les connexions
     environment:
       - NEO4J_AUTH=neo4j/${NEO4J}
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
     volumes:
       - neo4j_data:/data
     networks:

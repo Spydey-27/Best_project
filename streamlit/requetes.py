@@ -2,6 +2,7 @@ import streamlit as st
 from pymongo import MongoClient
 from globals import client, db, collection, neo4j_driver
 import json
+import networkx as nx
 films_collection = collection
 
 #
@@ -355,22 +356,190 @@ def question23(onglet1,onglet2,onglet3):
         st.code(f'records2, summary2, keys2 = neo4j_driver.execute_query("MATCH (a:Actors)-[:A_jouer]->(m:films)-[:A_pour_genre]->(g:Genre) WHERE a = "{actor}" MATCH (m2:films)-[:A_pour_genre]->(g) WHERE NOT (a)-[:A_jouer]->(m2) RETURN m2.title AS Recommandation, COUNT(DISTINCT g) AS Score ORDER BY Score DESC, rand() LIMIT 5;" , database_="neo4j")')
 
 def question24(onglet1,onglet2,onglet3):
-    pass
+     records, summary, keys = neo4j_driver.execute_query(
+        """
+        MATCH (r:Realisateur) - [:A_Realise] -> (:films) - [:A_pour_genre] -> (g:Genre)
+        Match (r2:Realisateur) - [:A_Realise] -> (:films) - [:A_pour_genre] -> (g2:Genre)
+        Where r <> r2 AND g=g2 AND r.realisateur  < r2.realisateur
+        Merge (r) -[:Influence_par]-(r2)
+        Return DISTINCT r.realisateur, r2.realisateur
+        """
+        , database_="neo4j",
+    )
+    with onglet1:
+        st.header("Voici les réalisateurs qui se sont influencés mutuellement :")
+        for record in records:
+            st.write(f"- {record[0]} et {record[1]} se sont influencés mutuellement.")
+    with onglet2:
+        st.header("Voici notre requête")
+        st.code('records, summary, keys = neo4j_driver.execute_query("MATCH (r:Realisateur) - [:A_Realise] -> (:films) - [:A_pour_genre] -> (g:Genre) Match (r2:Realisateur) - [:A_Realise] -> (:films) - [:A_pour_genre] -> (g2:Genre) Where r <> r2 AND g=g2 AND r.realisateur  < r2.realisateur Merge (r) -[:Influence_par]-(r2) Return DISTINCT r.realisateur, r2.realisateur" , database_="neo4j")')
+
 
 def question25(onglet1,onglet2,onglet3):
-    pass
+
+    def requetes():
+        if actor == actor2 or actor2 == None or actor == None:
+            st.write("Les deux acteurs sélectionnés sont identiques. Veuillez en choisir deux différents.")
+            return None
+        else:
+            records2, summary2, keys2 = neo4j_driver.execute_query(
+                f"""
+                MATCH (debut:Actors {{actor: "{actor}"}}), (fin:Actors {{actor: "{actor2}"}})
+                MATCH path = shortestPath((debut)-[*]-(fin))
+                RETURN nodes(path) AS chemin;
+                """
+                , database_="neo4j",
+            )
+        return records2
+
+
+
+
+    records, summary, keys = neo4j_driver.execute_query(
+        """
+        MATCH (n:Actors)-[:A_jouer]->(f:films)
+        RETURN n.actor
+        """
+        , database_="neo4j",
+    )
+    actor = st.selectbox(
+            "Sélectionnez un acteur",
+            [record[0] for record in records], index=None
+        )
+    actor2 = st.selectbox(
+            "Sélectionnez un autre acteur",
+            [record[0] for record in records], index=None
+        )
+
+    st.header(f"Quel est le plus court chemin entre {actor} et {actor2} ?")
+    records2= requetes()
+    if records2 == None:
+        st.write("Pas de chemin entre ces deux acteurs.")
+        
+        
+    with onglet1:
+            st.write("Voici le plus court chemin entre les deux acteurs :")
+            if records2 == None:
+                st.write("Pas de chemin entre ces deux acteurs.")
+            else:
+                  for record in records2:
+                    chemin = record['chemin']
+                    chemin_affiche = []
+                    for i, node in enumerate(chemin):
+                        if 'actor' in node._properties:
+                            chemin_affiche.append(f"Acteur : {node._properties['actor']}")
+                        if 'genre' in node._properties:
+                            chemin_affiche.append(f"Genre : {node._properties['genre']}")
+                        if 'title' in node._properties:
+                            chemin_affiche.append(f"Film : {node._properties['title']}")
+                    
+                    st.write(" -> ".join(chemin_affiche))
+
+    with onglet2:
+        st.header("Voici notre requête")
+        st.code(f'records2, summary2, keys2 = neo4j_driver.execute_query("MATCH (debut:Actors {{actor: "{actor}"}}), (fin:Actors {{actor: "{actor2}"}}) MATCH path = shortestPath((debut)-[*]->(fin)) RETURN nodes(path) AS chemin;" , database_="neo4j")')
 
 def question26(onglet1,onglet2,onglet3):
-    pass
+    records, summary, keys = neo4j_driver.execute_query(
+        """
+        CALL gds.louvain.stream('myGraph')
+        YIELD nodeId, communityId, intermediateCommunityIds
+        WITH gds.util.asNode(nodeId) AS node, communityId
+        WHERE node.actor IS NOT NULL
+        RETURN node.actor AS name, communityId
+        ORDER BY communityId ASC
+        """
+        , database_="neo4j",
+    )
+
+    with onglet1:
+        st.header("Voici les communautés d'acteurs :")
+        st.write("Il y a", len(set([record[1] for record in records])), "communautés d'acteurs.")
+        st.write("On remarquera que certaines communautés sont plus grandes que d'autres. Nous supposons que cela est dû au peu de films présents dans la base de données. Seulement 100 ce qui n'est pas assez représentatif.")
+        communaute_dict = {}
+        temp = records[0][1]
+        temp2 = 1
+        communaute_dict[temp2] = []
+        for i, record in enumerate(records):
+            if record[1] != temp:
+                temp = record[1]
+                temp2 += 1
+                communaute_dict[temp2] = []
+            communaute_dict[temp2].append(record[0])
+        
+        commu = st.selectbox(
+            "Sélectionnez une communauté",
+            [key for key in communaute_dict.keys()], index=None
+        )
+        st.write(f"Voici les acteurs de la communauté {commu} :")
+        for key, value in communaute_dict.items():
+            if key == commu:
+                for actor in value:
+                    st.write(f"- {actor}")
+                break
+
+
+    with onglet2:
+        st.header("Voici notre requête")
+        st.code('records, summary, keys = neo4j_driver.execute_query("CALL gds.louvain.stream(\'myGraph\') YIELD nodeId, communityId, intermediateCommunityIds WITH gds.util.asNode(nodeId) AS node, communityId WHERE node.actor IS NOT NULL RETURN node.actor AS name, communityId ORDER BY communityId ASC" , database_="neo4j")')
+        st.write("Cette requête permet de trouver les communautés d'acteurs dans le graphe.")
 
 def question27(onglet1,onglet2,onglet3):
+
     pass
 
 def question28(onglet1,onglet2,onglet3):
-    pass
+    records, summary, keys = neo4j_driver.execute_query(
+        """
+        MATCH (n:Actors)-[:A_jouer]->(f:films)
+        RETURN n.actor
+        """
+        , database_="neo4j",
+    )
+    actor = st.selectbox(
+            "Sélectionnez votre acteur préféré",
+            [record[0] for record in records]
+        )
+    records2, summary2, keys2 = neo4j_driver.execute_query(
+        f"""
+        MATCH (a:Actors)-[:A_jouer]->(m:films)
+        WHERE a.actor = "{actor}"
+        RETURN m.title AS Recommandation
+        LIMIT 5;
+        """
+        , database_="neo4j",
+    )
+
+    with onglet1:
+        st.header(f"Tu aimes cet acteur : {actor} ? Voici quelques films que tu pourrais adorer :")
+        for record in records2:
+            st.write(f"- {record[0]}")
+    with onglet2:
+        st.header("Voici notre requête")
+        st.code(f'records2, summary2, keys2 = neo4j_driver.execute_query("MATCH (a:Actors)-[:A_jouer]->(m:films) WHERE a.actor = "{actor}" RETURN m.title AS Recommandation LIMIT 5;" , database_="neo4j")')
 
 def question29(onglet1,onglet2,onglet3):
-    pass
+   records, summary, keys = neo4j_driver.execute_query(
+        """
+        
+        MATCH (m:films)-[:A_pour_genre]->(g:Genre)<-[:A_pour_genre]-(m2:films)
+        WHERE m.Director < m2.Director AND m.Director <> m2.Director AND m.year = m2.year
+        Match (r:Realisateur)
+        Match (r2:Realisateur)
+        Where r.realisateur = m.Director AND r2.realisateur = m2.Director
+        Merge (r) -[:Concurence]-(r2)
+        RETURN r, r2
+        """
+        , database_="neo4j",
+    )
+
+    with onglet1:
+        st.header("Voici les réalisateurs qui se sont influencés mutuellement :")
+        for record in records:
+            st.write(f"- {record[0]} et {record[1]} sont entrés en concurrence.")
+    with onglet2:
+        st.header("Voici notre requête")
+        st.code('records, summary, keys = neo4j_driver.execute_query("MATCH (m:films)-[:A_pour_genre]->(g:Genre)<-[:A_pour_genre]-(m2:films) WHERE m.Director < m2.Director AND m.Director <> m2.Director AND m.year = m2.year Match (r:Realisateur) Match (r2:Realisateur) Where r.realisateur = m.Director AND r2.realisateur = m2.Director Merge (r) -[:Concurence]-(r2) RETURN r, r2" , database_="neo4j")')
 
 def question30(onglet1,onglet2,onglet3):
     pass

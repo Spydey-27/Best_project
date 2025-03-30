@@ -3,3 +3,17 @@ id, title, year, Votes
 
 Faire une requête mongoDB pour récupérer tous les films avec :
 _id = 1, title=1, year=1, Director =1,rating =1, Votes=1, Revenue=1
+
+MATCH (m:films)-[:A_pour_genre]->(g:Genre)<-[:A_pour_genre]-(m2:films)
+WHERE m.Director < m2.Director AND m.Director <> m2.Director AND m.year = m2.year
+Match (r:Realisateur)
+Match (r2:Realisateur)
+Where r.realisateur = m.Director AND r2.realisateur = m2.Director
+Merge (r) -[:Concurence]-(r2)
+RETURN r, r2
+
+MATCH (r:Realisateur) - [:A_Realise] -> (:films) - [:A_pour_genre] -> (g:Genre)
+Match (r2:Realisateur) - [:A_Realise] -> (:films) - [:A_pour_genre] -> (g2:Genre)
+Where r <> r2 AND g=g2 AND r.realisateur  < r2.realisateur
+Merge (r) -[:Influence_par]-(r2)
+Return DISTINCT r.realisateur, r2.realisateur

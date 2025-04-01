@@ -6,6 +6,11 @@ WORKDIR /app
 # Copier les fichiers du projet
 COPY  . .
 
+WORKDIR ~/
+COPY .streamlit/ .streamlit/
+
+WORKDIR /app
+
 # Installer les dépendances
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirement.txt

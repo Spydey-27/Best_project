@@ -38,6 +38,7 @@ services:
       - streamlit_network
     volumes:
       - ./streamlit:/app 
+      - ./streamlit/.streamlit:/root/.streamlit
     environment:
       - NEO4J_AUTH=${NEO4J}
 

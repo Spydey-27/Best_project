@@ -95,6 +95,36 @@ def sources():
     """
     st.title("Voici nos sources :")
     st.write("Ce projet a été réalisé par Julien Oliveira et Ambre Vasseur.")
+    st.markdown("""
+        Ce projet consiste à créer un site web à partir du framework [Streamlit](https://streamlit.io/) couplé à 2 bases de données. Une avec [MongoDB](https://www.mongodb.com/) et une autre avec [Neo4j](https://neo4j.com/).
+        L'objectif était de réaliser quelques requêtes sur un dataset de 100 films.""")
+    data = collection.find_one({}, {"_id": 0})
+    st.write("Voici un exemple de document dans la base de données MongoDB :")
+    st.json(data)
+    st.markdown("Voici un exemple de document dans la base de données Neo4j :")
+    data_neo4j = neo4j_driver.execute_query(
+        "MATCH (n) RETURN n LIMIT 1"
+    )
+    st.json(data_neo4j[0])
+
+    st.header("Quels sont les problèmes que nous avons rencontrés et comment les avons nous résolu ?")
+    st.write("""
+        L'une des premières difficultés a été de connecter les différentes bases de données entre elles. La base MongoDB via Atlas et Neo4J via Aura, nous avons trouvé la solution en recherchant dans la documentation. Cependant, pour des questions de facilités de déploiement, nous avons opté pour une version avec Docker beaucoup plus facile à manipuler.
+        Par ailleurs, certaines questions du sujet étaient un peu floues, nous incitant à faire des choix sur certaines réponses.
+        De plus, l'implémentation des graphiques pour les dernières questions de la partie MongoDB était complexe mais encore (et toujours) grâce à la documentation de streamlit, nous avons pu afficher joliment nos schémas.
+        Enfin, la dernière difficulté était de trouver les bonnes requêtes pour répondre aux questions, que ce soit en MongoDB ou en Neo4j.
+        """)
+
+    st.header("Qu'avons nous utilisé ?")
+    st.markdown(
+        """
+        * [![](https://img.shields.io/badge/-Streamlit-FF4B4B?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io/)
+        * ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+        * ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+        * ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
+        * ![Neo4J](https://img.shields.io/badge/Neo4j-008CC1?style=for-the-badge&logo=neo4j&logoColor=white)
+        """
+    )
 
     st.write(f'''
     <a target="_self" href="https://github.com/Spydey-27/Best_project">
@@ -173,7 +203,7 @@ def Questions():
 
 pages = {
     "Menu": [
-        st.Page(home, title="🌟 Best project 🌟"),
+        st.Page(home, title="🌟 Best project Home 🌟"),
         st.Page(Questions, title="Questions", icon="❓"),
     ],
     "Sources" : [

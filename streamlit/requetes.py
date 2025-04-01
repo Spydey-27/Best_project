@@ -13,9 +13,9 @@ films_collection = collection
 
 def question1(onglet1,onglet2,onglet3):
     pipeline1 = [
-    {"$group": {"_id": "$year", "nombre_films": {"$sum": 1}}},
-    {"$sort": {"nombre_films": -1}},
-    {"$limit": 1}
+    {"$group": {"_id": "$year", "nombre_films": {"$sum": 1}}}, #Comptage du nombre de film par anné
+    {"$sort": {"nombre_films": -1}}, #Tri par ordre décroissant 
+    {"$limit": 1} #Sélection du premier
 ]
     resultat1 = list(films_collection.aggregate(pipeline1))
     with onglet1:
@@ -35,8 +35,8 @@ def question1(onglet1,onglet2,onglet3):
 
 def question2(onglet1,onglet2,onglet3):
     pipeline = [
-    { "$match": {  "year": { "$gt": 1999 } }},
-    { "$count": "nombre_films" }
+    { "$match": {  "year": { "$gt": 1999 } }}, #Selectionne les années au dessus de 1999
+    { "$count": "nombre_films" } #Compte le nombre de film
     ]
     resultat = list(films_collection.aggregate(pipeline))
     with onglet1:
@@ -57,13 +57,12 @@ def question3(onglet1,onglet2,onglet3):
     pipeline = [
     {
         "$group": {
-        "_id": { "$eq": ["$year", 2007] },  
-        "averageVotes": { "$avg": "$Votes" } 
+        "_id": { "$eq": ["$year", 2007] },  #Selection des films seulement sorti en 2007
+        "averageVotes": { "$avg": "$Votes" } #Moyenne des Votes
         }
     },
     {
-        "$match": {
-        "_id": True      }
+        "$match": {"_id": True}
     }
     ]
 
@@ -84,21 +83,15 @@ def question3(onglet1,onglet2,onglet3):
 
 def question4(onglet1,onglet2,onglet3):
     
-    
-    
-    
-    
     pipeline = [
-    {"$match": {"year": {"$ne": None, "$exists": True}}},  # Exclure années vides
-    {"$group": {"_id": "$year", "nombreFilms": {"$sum": 1}}},
-    {"$sort": {"_id": 1}}  # Trier par année
+    {"$match": {"year": {"$ne": None, "$exists": True}}},  #Exclure les années vides
+    {"$group": {"_id": "$year", "nombreFilms": {"$sum": 1}}}, #Comptage du nombre de film par année
+    {"$sort": {"_id": 1}}  #Trier par année
 ]
-
 
     result = list(films_collection.aggregate(pipeline))
 
-
-    df = pd.DataFrame(result)
+    df = pd.DataFrame(result)#Ectraction des données
     df.rename(columns={"_id": "Année", "nombreFilms": "Nombre de films"}, inplace=True)
     
     
@@ -108,19 +101,18 @@ def question4(onglet1,onglet2,onglet3):
         
         
         with st.container():
-            st.write("Cet histogramme montre l'évolution du nombre de films produits chaque année.")
         
             fig, ax = plt.subplots(figsize=(10, 5))
-            sns.barplot(x=df["Année"], y=df["Nombre de films"], color="skyblue", ax=ax)
+            sns.barplot(x=df["Année"], y=df["Nombre de films"], color="skyblue", ax=ax)#Creation de l'histogramme
             
-            # Personnalisation
+            #Label des axes
             ax.set_xlabel("Année")
             ax.set_ylabel("Nombre de films")
             ax.set_title("Nombre de films produits par année")
             plt.xticks(rotation=45)
             plt.grid(axis="y", linestyle="--", alpha=0.7)
             
-            st.pyplot(fig)
+            st.pyplot(fig) #Affichage
     
     with onglet2:
         st.header("Voici notre requête")
@@ -128,18 +120,17 @@ def question4(onglet1,onglet2,onglet3):
         st.code('resultat = list(films_collection.aggregate(pipeline))')
         st.write("Le pipeline est :")
         st.code(formatted_pipeline, language="json")
-        
 
 def question5(onglet1,onglet2,onglet3):
     pipeline5 = [
-        {"$set": {"genre": {"$split": ["$genre", ","]}}},  
+        {"$set": {"genre": {"$split": ["$genre", ","]}}},  #Sépare les différents genre des films
         {"$unwind": "$genre"},  
         {"$group": {"_id": "$genre"}}  
     ]
 
     resultat5 = list(films_collection.aggregate(pipeline5))
     for i in range(len(resultat5)):
-        resultat5[i] = resultat5[i]["_id"]
+        resultat5[i] = resultat5[i]["_id"]#Liste tout les genres
 
 
     with onglet1:
@@ -154,20 +145,19 @@ def question5(onglet1,onglet2,onglet3):
         st.code('resultat5 = list(films_collection.aggregate(pipeline5))')
         st.write("Le pipeline est :")
         st.code(formatted_pipeline, language="json")
-
-
+        
 def question6(onglet1,onglet2,onglet3):
     pipeline6= [
-    { "$match": { "Revenue (Millions)": { "$ne": None , "$ne": "", "$gt": 0 } } },  
-    { "$sort": { "Revenue (Millions)": -1 } },  
-    { "$limit": 1 }
+    { "$match": { "Revenue (Millions)": { "$ne": None , "$ne": "", "$gt": 0 } } }, #Non Sélection des Revenus non nuls 
+    { "$sort": { "Revenue (Millions)": -1 } }, #Tri par revenus décroissant 
+    { "$limit": 1 } #Sélection du premier
     ]
 
     resultat6 = list(films_collection.aggregate(pipeline6))
     
     with onglet1:
         st.header("Quel est le film qui a généré le plus de revenu.")
-        st.write("Le film qui a généré le plus de revenus est ", resultat6[0]["title"])
+        st.write(f"Le film qui a généré le plus de revenus est  **{resultat6[0]["title"]}**")
     
     with onglet2:
         st.header("Voici notre requête")
@@ -175,22 +165,18 @@ def question6(onglet1,onglet2,onglet3):
         st.code('resultat6 = list(films_collection.aggregate(pipeline6))')
         st.write("Le pipeline est :")
         st.code(formatted_pipeline, language="json")
-        
 
 def question7(onglet1,onglet2,onglet3):
-    
-    
+
     pipeline7= [
 
-    { "$group": {"_id": "$Director","nombreFilms": { "$sum": 1 } }},
-    { "$match": { "nombreFilms": { "$gt": 5 } }},
-    { "$sort": { "nombreFilms": -1 } }
+    { "$group": {"_id": "$Director","nombreFilms": { "$sum": 1 } }}, #Extraction des Réalisateur et somme du nombre de leur films
+    { "$match": { "nombreFilms": { "$gt": 5 } }},#Sélection de ceux qui en ont 5
+    { "$sort": { "nombreFilms": -1 } }#Ordre décroissant
 
     ]
 
     resultat7 = list(films_collection.aggregate(pipeline7))
-    
-    
     
 
     with onglet1:
@@ -200,7 +186,7 @@ def question7(onglet1,onglet2,onglet3):
             for realisateur in resultat7:
                 st.write(f"{realisateur['_id']} - {realisateur['nombreFilms']} films")
         else:
-            st.write("Aucun réalisateur n'a réalisé plus de 5 films dans la base. Nolan est à selement 4 ;)")
+            st.write("Aucun réalisateur n'a réalisé plus de 5 films dans la base. Nolan est à seulement 4 ;)")
 
         
     with onglet2:
@@ -209,38 +195,24 @@ def question7(onglet1,onglet2,onglet3):
         st.code('resultat7 = list(films_collection.aggregate(pipeline7))')
         st.write("Le pipeline est :")
         st.code(formatted_pipeline, language="json")
-        
-
 
 def question8(onglet1,onglet2,onglet3):
 
     pipeline = [
         { 
-            "$match": { 
-                "Revenue (Millions)": { "$ne": None, "$ne": "", "$exists": True }  # Exclure revenus vides
-            }
+            "$match": { "Revenue (Millions)": { "$ne": None, "$ne": "", "$exists": True } } #Exclusion revenu vide
         },
         { 
-            "$addFields": { 
-                "revenueNum": { "$toDouble": "$Revenue (Millions)" },  # Convertir en nombre
-                "genreList": { "$split": ["$genre", ","] }  # Transformer en liste
-            }
-        },
-        { 
-            "$unwind": "$genreList"  
-        },
-        { 
-            "$group": {"_id": "$genreList",  "revenuMoyen": { "$avg": "$revenueNum" }  }
-        },
-        { 
-            "$sort": { "revenuMoyen": -1 }  
-        },
-        {"$limit": 1}
+            "$addFields": { "revenueNum": { "$toDouble": "$Revenue (Millions)" },  # Convertir en nombre
+                            "genreList": { "$split": ["$genre", ","] }  # Transformer en liste
+        }},
+        { "$unwind": "$genreList"  },
+        { "$group": {"_id": "$genreList",  "revenuMoyen": { "$avg": "$revenueNum" }  }},#Calcul revenu moyen selon genre
+        { "$sort": { "revenuMoyen": -1 }  }, #Ordre décroissant
+        {"$limit": 1} #Sélection premier
     ]
 
     result = films_collection.aggregate(pipeline)
-    
-    
     
     with onglet1:
         st.header("Quel est le genre de film qui rapporte en moyenne le plus de revenus ?")
@@ -250,10 +222,6 @@ def question8(onglet1,onglet2,onglet3):
             revenu_moyen = round(genre_data["revenuMoyen"], 2)  
     
             st.write(f" Le genre qui génère le plus de revenus en moyenne est **{genre}** avec **{revenu_moyen}Millions**")
-
-        
-                
-                
     with onglet2:
         st.header("Voici notre requête")
         formatted_pipeline = json.dumps(pipeline, indent=1)
@@ -261,18 +229,14 @@ def question8(onglet1,onglet2,onglet3):
         st.write("Le pipeline est :")
         st.code(formatted_pipeline, language="json")
 
-
-
 def question9(onglet1,onglet2,onglet3):
     pipeline = [
     { 
-        "$match": { 
-            "year": { "$ne": None, "$exists": True },
-            "Votes": { "$ne": None, "$ne": "", "$exists": True }
-        }
+        "$match": { "year": { "$ne": None, "$exists": True },
+                    "Votes": { "$ne": None, "$ne": "", "$exists": True }} #Exclusion des données nulles ou inexistantes
     },
     { 
-        "$addFields": { 
+        "$addFields": { #Convertion des données
             "votesNum": { 
                 "$convert": { 
                     "input": "$Votes", 
@@ -281,23 +245,20 @@ def question9(onglet1,onglet2,onglet3):
                 }
             },
             "decade": { 
-                "$subtract": [ { "$toInt": "$year" }, { "$mod": [{ "$toInt": "$year" }, 10] } ] 
+                "$subtract": [ { "$toInt": "$year" }, { "$mod": [{ "$toInt": "$year" }, 10] } ] #Trier par décades
             }
         }
     },
-    { "$match": { "votesNum": { "$ne": None } } },  
-    { "$sort": { "decade": 1, "votesNum": -1 } },
+    { "$match": { "votesNum": { "$ne": None } } }, #exclus Votes nuls ou inexistants 
+    { "$sort": { "decade": 1, "votesNum": -1 } },#Tri par vote
     { 
         "$group": {
             "_id": "$decade",
-            "topFilms": { "$push": { "title": "$title", "votes": "$votesNum", "year": "$year", "rating":"$rating" } }
+            "topFilms": { "$push": { "title": "$title", "votes": "$votesNum", "year": "$year", "rating":"$rating" } }#Groupe par décades
         }
     },
     { 
-        "$project": {
-            "_id": 1,
-            "topFilms": { "$slice": ["$topFilms", 3] }
-        }
+        "$project": {"_id": 1,"topFilms": { "$slice": ["$topFilms", 3] }}#prends les trois fikm plus voté
     },
     { "$sort": { "_id": 1 } }
 ]
@@ -332,7 +293,7 @@ def question10(onglet1,onglet2,onglet3):
     
     pipeline = [
         { 
-            "$match": { 
+            "$match": { #Exclusion des donnes nulles ou inexistante
                 "Runtime (Minutes)": { "$ne": None, "$ne": "", "$exists": True },
                 "genre": { "$ne": None, "$ne": "", "$exists": True }
             }
@@ -340,7 +301,7 @@ def question10(onglet1,onglet2,onglet3):
         { 
             "$addFields": { 
                 "runtimeNum": { "$toInt": "$Runtime (Minutes)" },  
-                "genreList": { "$split": ["$genre", ","] }  
+                "genreList": { "$split": ["$genre", ","] }  #Tri des genre par films
             }
         },
         { "$unwind": "$genreList" },  
@@ -348,7 +309,7 @@ def question10(onglet1,onglet2,onglet3):
         { 
             "$group": {
                 "_id": "$genreList",
-                "longestFilm": { "$first": { "title": "$title", "runtime": "$runtimeNum", "year": "$year" } }
+                "longestFilm": { "$first": { "title": "$title", "runtime": "$runtimeNum", "year": "$year" } }#Associe le film le plus long à son genre
             }
         },
         { "$sort": { "_id": 1 } }  
@@ -381,10 +342,10 @@ def question11(onglet1,onglet2,onglet3):
     { 
         "$match": { 
             "Metascore": { "$ne": None, "$exists": True },
-            "Revenue (Millions)": { "$ne": None, "$exists": True }
+            "Revenue (Millions)": { "$ne": None, "$exists": True } #Exclusion des données inexistante ou nulles
         }
     },
-    { 
+    { #Conversion des donné en chiffre
         "$addFields": { 
             "MetascoreNum": { 
                 "$convert": { 
@@ -403,7 +364,7 @@ def question11(onglet1,onglet2,onglet3):
         }
     },
     { 
-        "$match": { 
+        "$match": { #Critère pour la vue
             "MetascoreNum": { "$gt": 80 },
             "RevenueNum": { "$gt": 50 }
         }
@@ -436,7 +397,6 @@ def question11(onglet1,onglet2,onglet3):
         st.write("Le pipeline est :")
         st.code(formatted_pipeline, language="json")
     
-    
 
 def question12(onglet1,onglet2,onglet3):  
     
@@ -444,11 +404,11 @@ def question12(onglet1,onglet2,onglet3):
     { 
         "$match": { 
             "Runtime (Minutes)": { "$ne": None, "$exists": True },
-            "Revenue (Millions)": { "$ne": None, "$exists": True }
+            "Revenue (Millions)": { "$ne": None, "$exists": True }#Exclusion donnée nulle ou inexistante
         }
     },
     { 
-        "$addFields": { 
+        "$addFields": { #Conversion
             "RuntimeNum": { 
                 "$convert": { "input": "$Runtime (Minutes)", "to": "int", "onError": None }
             },
@@ -457,15 +417,15 @@ def question12(onglet1,onglet2,onglet3):
             }
         }
     },
-    { "$match": { "RuntimeNum": { "$ne": None }, "RevenueNum": { "$ne": None } } },
-    { "$project": { "_id": 0, "Runtime": "$RuntimeNum", "Revenue": "$RevenueNum" } }
+    { "$match": { "RuntimeNum": { "$ne": None }, "RevenueNum": { "$ne": None } } },#Exclusion données nulles ou inexistante
+    { "$project": { "_id": 0, "Runtime": "$RuntimeNum", "Revenue": "$RevenueNum" } }#Recuperation données utiles
 ]
 
 
     data = list(films_collection.aggregate(pipeline))
-    df = pd.DataFrame(data)  # Conversion en DataFrame
+    df = pd.DataFrame(data)  
 
-  
+    #Calcul des différents coeficients
     pearson_corr, pearson_p = pearsonr(df["Runtime"], df["Revenue"])
     spearman_corr, spearman_p = spearmanr(df["Runtime"], df["Revenue"])
 
@@ -479,15 +439,18 @@ def question12(onglet1,onglet2,onglet3):
         
         st.write(f"**Corrélation de Pearson** : {pearson_corr:.3f} (p-value: {pearson_p:.5f})")
         st.write(f" **Corrélation de Spearman** : {spearman_corr:.3f} (p-value: {spearman_p:.5f})")
+        st.write("Ces coefficient indique qu'il y a une faible corrélation entre Runtime et Revenus")
 
         # Affichage de la heatmap
         st.subheader("Matrice de corrélation")
+        st.write("Le tout confimé par cette matrice")
         fig, ax = plt.subplots(figsize=(6, 5))
         sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", ax=ax)
         st.pyplot(fig)
 
         # Affichage du scatter plot avec régression
         st.subheader("Graphique de régression")
+        st.write("Le tout re-reconfimé par ce graphique, la droite aurait du être linéaire. ")
         fig, ax = plt.subplots(figsize=(8, 5))
         sns.regplot(x=df["Runtime"], y=df["Revenue"], scatter_kws={"alpha": 0.5}, line_kws={"color": "red"}, ax=ax)
         ax.set_xlabel("Durée du film (minutes)")
@@ -495,29 +458,24 @@ def question12(onglet1,onglet2,onglet3):
         ax.set_title("Corrélation entre la durée et le revenu des films")
         st.pyplot(fig)
     
-    
-    
-    
-    
-
 def question13(onglet1,onglet2,onglet3):
     pipeline = [
     {
-        "$match": {
+        "$match": {#Exclusion des donéée non existante ou nulles
             "Runtime (Minutes)": {"$ne": None, "$exists": True},
             "year": {"$ne": None, "$exists": True}
         }
     },
     {
-        "$addFields": {
+        "$addFields": {#Convertion en entier
             "RuntimeNum": {"$convert": {"input": "$Runtime (Minutes)", "to": "int", "onError": None}},
-            "Decade": {"$subtract": ["$year", {"$mod": ["$year", 10]}]}
+            "Decade": {"$subtract": ["$year", {"$mod": ["$year", 10]}]}#Séparation des année par décades
         }
     },
     {
         "$group": {
             "_id": "$Decade",
-            "AverageRuntime": {"$avg": "$RuntimeNum"},
+            "AverageRuntime": {"$avg": "$RuntimeNum"},#Durée moyenne des films par décades
             "FilmCount": {"$sum": 1}
         }
     },
@@ -532,6 +490,7 @@ def question13(onglet1,onglet2,onglet3):
 # Affichage dans Streamlit
     with st.container():
         st.header("Évolution de la durée moyenne des films par décennie")
+        st.write("Les films des années 200 sont plus longs que les autres décennies")
         
 
         # Création du graphique Matplotlib

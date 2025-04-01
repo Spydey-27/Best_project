@@ -29,6 +29,10 @@ with neo4j_driver.session(database="neo4j") as session:
 ##################### SET UP NEO4J #####################
 
 def createdb():
+    """
+    Permet de créer la base de données Neo4j
+    """
+    # On crée la base de données Neo4j
     movie = collection.find({},{ "_id": 1, "title": 1, "year": 1, "Director": 1, "rating": 1, "Revenue (Millions)":1, "Votes":1, "genre":1})
     for i in movie:
         summary = neo4j_driver.execute_query(
@@ -82,6 +86,9 @@ def createdb():
 
 
 def find_actors():
+    """
+    Permet de trouver les acteurs dans la base de données MongoDB
+    """
     acteurs = set() #merci chatgpt! En gros c'est un type de collection qui peut contenir que des valeurs unique
     query = collection.find({},{ "_id": 0, "Actors": 1})
     for i in query:
@@ -92,6 +99,9 @@ def find_actors():
     return list(acteurs)
 
 def find_movies_x_actor():
+    """
+    Permet de trouver les films par acteur dans la base de données MongoDB
+    """
     actor = find_actors()
     resultat = {}
     for i in range(len(actor)):
@@ -112,6 +122,9 @@ def find_movies_x_actor():
             ).summary
 
 def find_realisator():
+    """
+    Permet de trouver les réalisateurs dans la base de données MongoDB
+    """
     realisateurs = set()
     query = collection.find({},{ "_id": 0, "Director": 1})
     for i in query:
@@ -119,6 +132,9 @@ def find_realisator():
     return list(realisateurs)
 
 def find_genre():
+    """
+    Permet de trouver les genres dans la base de données MongoDB
+    """
     genre_unique = set()
     query = collection.find({},{ "_id": 1, "genre": 1})
     for film in query:
@@ -146,6 +162,9 @@ def find_genre():
             )
 
 def director_x_films():
+    """
+    Permet de trouver les films par réalisateur dans la base de données MongoDB
+    """
     query = collection.find({},{ "_id": 1, "Director": 1})
     for i in query:
         summary = neo4j_driver.execute_query(

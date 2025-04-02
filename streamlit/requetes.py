@@ -489,19 +489,22 @@ def question12(onglet1,onglet2,onglet3):
     # Affichage Streamlit
     with st.container():
         st.header("Corrélation entre la durée des films et leurs revenus")
-
+        st.write("Il n'y a pas vraiment de corrélation entre les deux")
         
         st.write(f"**Corrélation de Pearson** : {pearson_corr:.3f} (p-value: {pearson_p:.5f})")
         st.write(f" **Corrélation de Spearman** : {spearman_corr:.3f} (p-value: {spearman_p:.5f})")
+        st.write("Ces coefficient indique qu'il y a une faible corrélation entre Runtime et Revenus les coeficients aurait dû être plus élevé")
 
         # Affichage de la heatmap
         st.subheader("Matrice de corrélation")
+        st.write("Le tout confimé par cette matrice")
         fig, ax = plt.subplots(figsize=(6, 5))
         sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", ax=ax)
         st.pyplot(fig)
 
         # Affichage du scatter plot avec régression
         st.subheader("Graphique de régression")
+        st.write("Le tout re-reconfimé par ce graphique, la droite aurait du être linéaire.")
         fig, ax = plt.subplots(figsize=(8, 5))
         sns.regplot(x=df["Runtime"], y=df["Revenue"], scatter_kws={"alpha": 0.5}, line_kws={"color": "red"}, ax=ax)
         ax.set_xlabel("Durée du film (minutes)")
